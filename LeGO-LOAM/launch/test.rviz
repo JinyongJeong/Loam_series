@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /Velodyne1
+        - /Trajectory1
         - /Map Cloud1
       Splitter Ratio: 0.703999996
     Tree Height: 843
@@ -334,8 +335,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 4.57089996
-        Min Value: 0.300000012
+        Max Value: 4.86339617
+        Min Value: -6.21128584e-06
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -346,7 +347,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 152
+      Max Intensity: 518
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: Trajectory
@@ -424,8 +425,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 50.6406975
-        Min Value: -8.80179691
+        Max Value: 45.0952187
+        Min Value: -7.13219547
         Value: true
       Axis: Y
       Channel Name: intensity
@@ -500,25 +501,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 121.625351
+      Distance: 58.6779327
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -4.00708675
-        Y: 8.41910172
-        Z: 6.0145154
+        X: -5.84475994
+        Y: 12.9426832
+        Z: 23.0094624
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.624798477
+      Pitch: 0.804796576
       Target Frame: base_link
       Value: Orbit (rviz)
-      Yaw: 0.742378414
+      Yaw: 2.64056587
     Saved: ~
 Window Geometry:
   Displays:
@@ -538,5 +539,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1855
-  X: 1985
+  X: 65
   Y: 24

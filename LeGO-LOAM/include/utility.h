@@ -99,9 +99,16 @@ extern const int systemDelay = 0;
 extern const int imuQueLength = 200;
 
 extern const float sensorMountAngle = 0.0;
+
+//segmentation threshold
 extern const float segmentTheta = 60.0/180.0*M_PI; // decrese this value may improve accuracy
+
+//If number of segment is below than 30, check line number. this for minimum number of point for it
 extern const int segmentValidPointNum = 5;
+
+//if number of segment is small, number of line is checked, this is threshold for it.
 extern const int segmentValidLineNum = 3;
+
 extern const float segmentAlphaX = ang_res_x / 180.0 * M_PI;
 extern const float segmentAlphaY = ang_res_y / 180.0 * M_PI;
 

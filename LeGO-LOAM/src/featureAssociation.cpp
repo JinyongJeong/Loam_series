@@ -201,7 +201,7 @@ public:
         pubLaserCloudSurfLast = nh.advertise<sensor_msgs::PointCloud2>("/laser_cloud_surf_last", 2);
         pubOutlierCloudLast = nh.advertise<sensor_msgs::PointCloud2>("/outlier_cloud_last", 2);
         pubLaserOdometry = nh.advertise<nav_msgs::Odometry> ("/laser_odom_to_init", 5);
-        
+
         initializationValue();
     }
 
@@ -376,6 +376,7 @@ public:
         p->z = z5 + imuShiftFromStartZCur;
     }
 
+    //Calculate global translation and rotation using IMU data
     void AccumulateIMUShiftAndRotation()
     {
         float roll = imuRoll[imuPointerLast];
@@ -475,6 +476,8 @@ public:
         newSegmentedCloudInfo = true;
     }
 
+    //Points are transformed to initial IMU data time which is obtained when first point is obtained.
+    //Using IMU data
     void adjustDistortion()
     {
         bool halfPassed = false;
@@ -484,6 +487,7 @@ public:
 
         for (int i = 0; i < cloudSize; i++) {
 
+            //Change axis
             point.x = segmentedCloud->points[i].y;
             point.y = segmentedCloud->points[i].z;
             point.z = segmentedCloud->points[i].x;
@@ -605,6 +609,7 @@ public:
         imuPointerLastIteration = imuPointerLast;
     }
 
+    //Calculate smoothness
     void calculateSmoothness()
     {
         int cloudSize = segmentedCloud->points.size();
@@ -802,46 +807,6 @@ public:
 	        pubSurfPointsLessFlat.publish(laserCloudOutMsg);
 	    }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     void TransformToStart(PointType const * const pi, PointType * const po)

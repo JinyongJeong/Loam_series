@@ -156,7 +156,7 @@ public:
     void copyPointCloud(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg){
 
         cloudHeader = laserCloudMsg->header;
-         cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
+//         cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
         pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);
         // Remove Nan points
         std::vector<int> indices;
@@ -295,6 +295,9 @@ public:
             for (size_t j = 0; j < Horizon_SCAN; ++j)
                 if (labelMat.at<int>(i,j) == 0)
                     labelComponents(i, j);
+
+        // label: 999999 -> invalid
+        // label: over 0 -> valid
 
         int sizeOfSegCloud = 0;
         // extract segmented cloud for lidar odometry
