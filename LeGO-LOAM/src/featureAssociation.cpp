@@ -349,6 +349,7 @@ public:
         imuVeloFromStartZCur = z2;
     }
 
+    //Transform point from current to start Imu frame
     void TransformToStartIMU(PointType *p)
     {
         float x1 = cos(imuRollCur) * p->x - sin(imuRollCur) * p->y;
@@ -632,6 +633,7 @@ public:
         }
     }
 
+    //Can't understand what ths function do //TODO
     void markOccludedPoints()
     {
         int cloudSize = segmentedCloud->points.size();
@@ -698,6 +700,7 @@ public:
                         segInfo.segmentedCloudGroundFlag[ind] == false) {
                     
                         largestPickedNum++;
+                        //Cloud lebel (2: sharpe , 1: less sharpe)
                         if (largestPickedNum <= 2) {
                             cloudLabel[ind] = 2;
                             cornerPointsSharp->push_back(segmentedCloud->points[ind]);

@@ -50,9 +50,9 @@ using namespace std;
 
 typedef pcl::PointXYZI  PointType;
 
-extern const string pointCloudTopic = "/os1_points";
+extern const string pointCloudTopic = "/os1_cloud_node/points";
 //extern const string pointCloudTopic = "/velodyne_points";
-extern const string imuTopic = "/imu/data";
+extern const string imuTopic = "/os1_cloud_node/data";
 
 // Save pcd
 extern const string fileDirectory = "/tmp/";
