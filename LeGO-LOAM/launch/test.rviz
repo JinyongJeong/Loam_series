@@ -29,8 +29,6 @@ Panels:
     SyncSource: Edge Features (green)
   - Class: rviz/Help
     Name: Help
-Toolbars:
-  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
@@ -347,7 +345,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 518
+      Max Intensity: 49
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: Trajectory
@@ -425,8 +423,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 45.0952187
-        Min Value: -7.13219547
+        Max Value: 43.5273781
+        Min Value: -15.6174116
         Value: true
       Axis: Y
       Channel Name: intensity
@@ -501,25 +499,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 58.6779327
+      Distance: 64.597702
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -5.84475994
-        Y: 12.9426832
-        Z: 23.0094624
+        X: -0.1422185
+        Y: -1.83815455
+        Z: -3.66257381
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.804796576
-      Target Frame: base_link
+      Pitch: 0.779796958
+      Target Frame: camera
       Value: Orbit (rviz)
-      Yaw: 2.64056587
+      Yaw: 6.16874886
     Saved: ~
 Window Geometry:
   Displays:

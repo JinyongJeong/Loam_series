@@ -633,7 +633,6 @@ public:
         }
     }
 
-    //Can't understand what ths function do //TODO
     void markOccludedPoints()
     {
         int cloudSize = segmentedCloud->points.size();
@@ -684,12 +683,14 @@ public:
 
             for (int j = 0; j < 6; j++) {
 
+                //One scan line is segmented to 6 segment, and extract feature from each segment
                 int sp = (segInfo.startRingIndex[i] * (6 - j)    + segInfo.endRingIndex[i] * j) / 6;
                 int ep = (segInfo.startRingIndex[i] * (5 - j)    + segInfo.endRingIndex[i] * (j + 1)) / 6 - 1;
 
                 if (sp >= ep)
                     continue;
 
+                //Smoothness(roughness) sort
                 std::sort(cloudSmoothness.begin()+sp, cloudSmoothness.begin()+ep, by_value());
 
                 int largestPickedNum = 0;
@@ -729,12 +730,14 @@ public:
                 }
 
                 int smallestPickedNum = 0;
+                //Flat point with ground flag
                 for (int k = sp; k <= ep; k++) {
                     int ind = cloudSmoothness[k].ind;
                     if (cloudNeighborPicked[ind] == 0 &&
                         cloudCurvature[ind] < surfThreshold &&
                         segInfo.segmentedCloudGroundFlag[ind] == true) {
 
+                        //flat ground index
                         cloudLabel[ind] = -1;
                         surfPointsFlat->push_back(segmentedCloud->points[ind]);
 
@@ -763,6 +766,7 @@ public:
                     }
                 }
 
+                //exclude sharp points
                 for (int k = sp; k <= ep; k++) {
                     if (cloudLabel[k] <= 0) {
                         surfPointsLessFlatScan->push_back(segmentedCloud->points[k]);
@@ -814,6 +818,7 @@ public:
 
     void TransformToStart(PointType const * const pi, PointType * const po)
     {
+        //ratio recovery (10 -> because of frame (0.1))
         float s = 10 * (pi->intensity - int(pi->intensity));
 
         float rx = s * transformCur[0];
@@ -1014,6 +1019,8 @@ public:
                     int closestPointScan = int(laserCloudCornerLast->points[closestPointInd].intensity);
 
                     float pointSqDis, minPointSqDis2 = nearestFeatureSearchSqDist;
+                    //Check near points of cloesest point
+                    //If the points is recent, and more close to current points -> update
                     for (int j = closestPointInd + 1; j < cornerPointsSharpNum; j++) {
                         if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan + 2.5) {
                             break;
@@ -1054,6 +1061,7 @@ public:
                     }
                 }
 
+                //Closest correspondence points of each feature points.
                 pointSearchCornerInd1[i] = closestPointInd;
                 pointSearchCornerInd2[i] = minPointInd2;
             }
@@ -1137,12 +1145,13 @@ public:
                                      (laserCloudSurfLast->points[j].z - pointSel.z) * 
                                      (laserCloudSurfLast->points[j].z - pointSel.z);
 
-                        if (int(laserCloudSurfLast->points[j].intensity) <= closestPointScan) {
+
+                        if (int(laserCloudSurfLast->points[j].intensity) <= closestPointScan) { //previous points than closest point
                             if (pointSqDis < minPointSqDis2) {
                               minPointSqDis2 = pointSqDis;
                               minPointInd2 = j;
                             }
-                        } else {
+                        } else {  //recent points than closest point
                             if (pointSqDis < minPointSqDis3) {
                                 minPointSqDis3 = pointSqDis;
                                 minPointInd3 = j;
@@ -1176,8 +1185,8 @@ public:
                 }
 
                 pointSearchSurfInd1[i] = closestPointInd;
-                pointSearchSurfInd2[i] = minPointInd2;
-                pointSearchSurfInd3[i] = minPointInd3;
+                pointSearchSurfInd2[i] = minPointInd2;  //closest point with previous timestamp than closestPointInd
+                pointSearchSurfInd3[i] = minPointInd3;  //closest point with recent timestamp than closestPointInd
             }
 
             if (pointSearchSurfInd2[i] >= 0 && pointSearchSurfInd3[i] >= 0) {

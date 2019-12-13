@@ -52,7 +52,7 @@ typedef pcl::PointXYZI  PointType;
 
 extern const string pointCloudTopic = "/os1_cloud_node/points";
 //extern const string pointCloudTopic = "/velodyne_points";
-extern const string imuTopic = "/os1_cloud_node/data";
+extern const string imuTopic = "/imu/data";
 
 // Save pcd
 extern const string fileDirectory = "/tmp/";
