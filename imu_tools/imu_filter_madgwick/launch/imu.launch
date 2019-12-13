@@ -1,0 +1,11 @@
+<!-- launch file -->
+<launch>
+
+  <node pkg="imu_filter_madgwick" type="imu_filter_node"
+      name="imu_filter_madgwick" output="screen">
+    <remap from="/imu/data_raw" to="/os1_cloud_node/imu" />
+
+    <param name="use_mag" value="false"/>
+    <param name="world_frame" value="enu"/>
+  </node>
+</launch>
