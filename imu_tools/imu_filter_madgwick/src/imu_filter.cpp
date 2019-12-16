@@ -87,22 +87,25 @@ static inline void compensateGyroDrift(
     float& gx, float& gy, float& gz)
 {
   // w_err = 2 q x s
+  // eq 47
   float w_err_x = 2.0f * q0 * s1 - 2.0f * q1 * s0 - 2.0f * q2 * s3 + 2.0f * q3 * s2;
   float w_err_y = 2.0f * q0 * s2 + 2.0f * q1 * s3 - 2.0f * q2 * s0 - 2.0f * q3 * s1;
   float w_err_z = 2.0f * q0 * s3 - 2.0f * q1 * s2 + 2.0f * q2 * s1 - 2.0f * q3 * s0;
 
+  //eq 48
   w_bx += w_err_x * dt * zeta;
   w_by += w_err_y * dt * zeta;
   w_bz += w_err_z * dt * zeta;
 
+  //eq 49
   gx -= w_bx;
   gy -= w_by;
   gz -= w_bz;
 }
 
 static inline void orientationChangeFromGyro(
-    float q0, float q1, float q2, float q3,
-    float gx, float gy, float gz,
+    float q0, float q1, float q2, float q3, //orientation quaternion
+    float gx, float gy, float gz, //angular velocity
     float& qDot1, float& qDot2, float& qDot3, float& qDot4)
 {
   // Rate of change of quaternion from gyroscope
@@ -114,10 +117,10 @@ static inline void orientationChangeFromGyro(
 }
 
 static inline void addGradientDescentStep(
-    float q0, float q1, float q2, float q3,
-    float _2dx, float _2dy, float _2dz,
-    float mx, float my, float mz,
-    float& s0, float& s1, float& s2, float& s3)
+    float q0, float q1, float q2, float q3, //current quaternion
+    float _2dx, float _2dy, float _2dz, //target
+    float mx, float my, float mz,   //measurement
+    float& s0, float& s1, float& s2, float& s3) //result
 {
   float f0, f1, f2;
 
@@ -256,8 +259,8 @@ void ImuFilter::madgwickAHRSupdate(
 }
 
 void ImuFilter::madgwickAHRSupdateIMU(
-    float gx, float gy, float gz,
-    float ax, float ay, float az,
+    float gx, float gy, float gz, //angular velocity
+    float ax, float ay, float az, //Linear acceleration
     float dt)
 {
   float recipNorm;
@@ -291,9 +294,11 @@ void ImuFilter::madgwickAHRSupdateIMU(
         break;
     }
 
+    // eq 44
     normalizeQuaternion(s0, s1, s2, s3);
 
     // Apply feedback step
+    // eq 43
     qDot1 -= gain_ * s0;
     qDot2 -= gain_ * s1;
     qDot3 -= gain_ * s2;
@@ -301,6 +306,7 @@ void ImuFilter::madgwickAHRSupdateIMU(
   }
 
   // Integrate rate of change of quaternion to yield quaternion
+  // eq 42
   q0 += qDot1 * dt;
   q1 += qDot2 * dt;
   q2 += qDot3 * dt;
