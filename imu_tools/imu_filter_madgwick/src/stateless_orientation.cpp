@@ -60,7 +60,7 @@ bool StatelessOrientation::computeOrientation(
   float Mx, My, Mz;
   float normH, invH, invA;
 
-  // A: pointing up
+  // A: pointing up (Why A(acceleration) is pointing up? not donw?)
   float Ax = A.x, Ay = A.y, Az = A.z;
 
   // E: pointing down/north

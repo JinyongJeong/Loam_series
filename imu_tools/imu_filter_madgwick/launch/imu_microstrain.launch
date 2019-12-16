@@ -1,0 +1,20 @@
+<!-- launch file -->
+<launch>
+
+  <node pkg="imu_filter_madgwick" type="imu_filter_node"
+      name="imu_filter_madgwick" output="screen">
+    <remap from="/imu/data_raw" to="/imu/imu" />
+    <remap from="/imu/mag" to="/imu/magnetic_field" />
+
+    <param name="use_mag" value="true"/>
+    <param name="world_frame" value="enu"/>
+    <param name="use_magnetic_field_msg" value="true"/>
+    <param name="stateless" value="false"/>
+    <param name="gain" value="0.2"/>
+    <param name="zeta" value="0.0"/>
+    <param name="mag_bias_x" value="0.0"/>
+    <param name="mag_bias_y" value="0.0"/>
+    <param name="mag_bias_z" value="0.0"/>
+    <param name="orientation_stddev" value="1.0"/>
+  </node>
+</launch>

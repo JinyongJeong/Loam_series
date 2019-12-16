@@ -1081,6 +1081,7 @@ public:
                 float y2 = tripod2.y;
                 float z2 = tripod2.z;
 
+                //Cross product
                 float m11 = ((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1));
                 float m22 = ((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1));
                 float m33 = ((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1));
@@ -1089,6 +1090,7 @@ public:
 
                 float l12 = sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2));
 
+                //What is mean of (la, lb, lc???)
                 float la =  ((y1 - y2)*m11 + (z1 - z2)*m22) / a012 / l12;
 
                 float lb = -((x1 - x2)*m11 - (z1 - z2)*m33) / a012 / l12;
@@ -1195,21 +1197,25 @@ public:
                 tripod2 = laserCloudSurfLast->points[pointSearchSurfInd2[i]];
                 tripod3 = laserCloudSurfLast->points[pointSearchSurfInd3[i]];
 
+                //cross product (plane normal)
                 float pa = (tripod2.y - tripod1.y) * (tripod3.z - tripod1.z) 
                          - (tripod3.y - tripod1.y) * (tripod2.z - tripod1.z);
                 float pb = (tripod2.z - tripod1.z) * (tripod3.x - tripod1.x) 
                          - (tripod3.z - tripod1.z) * (tripod2.x - tripod1.x);
                 float pc = (tripod2.x - tripod1.x) * (tripod3.y - tripod1.y) 
                          - (tripod3.x - tripod1.x) * (tripod2.y - tripod1.y);
+                // d component
                 float pd = -(pa * tripod1.x + pb * tripod1.y + pc * tripod1.z);
 
                 float ps = sqrt(pa * pa + pb * pb + pc * pc);
 
+                //Unit normal vector
                 pa /= ps;
                 pb /= ps;
                 pc /= ps;
                 pd /= ps;
 
+                //Plane-point distance
                 float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
 
                 float s = 1;
