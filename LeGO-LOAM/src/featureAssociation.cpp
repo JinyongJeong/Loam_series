@@ -332,10 +332,14 @@ public:
 
     void VeloToStartIMU()
     {
+        //velocity->globl frame
+        //imuVeloXCur : velocity of current point stamp
+        //imuVeloXStart : velocity of first point of cloud
         imuVeloFromStartXCur = imuVeloXCur - imuVeloXStart;
         imuVeloFromStartYCur = imuVeloYCur - imuVeloYStart;
         imuVeloFromStartZCur = imuVeloZCur - imuVeloZStart;
 
+        //convert velocity from global frame to sensor frame?
         float x1 = cosImuYawStart * imuVeloFromStartXCur - sinImuYawStart * imuVeloFromStartZCur;
         float y1 = imuVeloFromStartYCur;
         float z1 = sinImuYawStart * imuVeloFromStartXCur + cosImuYawStart * imuVeloFromStartZCur;
@@ -352,6 +356,9 @@ public:
     //Transform point from current to start Imu frame
     void TransformToStartIMU(PointType *p)
     {
+        //imuRollCur: global orientation of points
+
+        //local point conversion from sensor frame to global frame
         float x1 = cos(imuRollCur) * p->x - sin(imuRollCur) * p->y;
         float y1 = sin(imuRollCur) * p->x + cos(imuRollCur) * p->y;
         float z1 = p->z;
@@ -364,6 +371,7 @@ public:
         float y3 = y2;
         float z3 = -sin(imuYawCur) * x2 + cos(imuYawCur) * z2;
 
+        //local point conversion from global frame to sensor frame at first point stamp
         float x4 = cosImuYawStart * x3 - sinImuYawStart * z3;
         float y4 = y3;
         float z4 = sinImuYawStart * x3 + cosImuYawStart * z3;
@@ -380,12 +388,15 @@ public:
     //Calculate global translation and rotation using IMU data
     void AccumulateIMUShiftAndRotation()
     {
+        //global orientation
         float roll = imuRoll[imuPointerLast];
         float pitch = imuPitch[imuPointerLast];
         float yaw = imuYaw[imuPointerLast];
+        //acceleration in sensor frame
         float accX = imuAccX[imuPointerLast];
         float accY = imuAccY[imuPointerLast];
         float accZ = imuAccZ[imuPointerLast];
+
 
         float x1 = cos(roll) * accX - sin(roll) * accY;
         float y1 = sin(roll) * accX + cos(roll) * accY;
@@ -394,23 +405,29 @@ public:
         float x2 = x1;
         float y2 = cos(pitch) * y1 - sin(pitch) * z1;
         float z2 = sin(pitch) * y1 + cos(pitch) * z1;
-
+        //acceleration in global frame
         accX = cos(yaw) * x2 + sin(yaw) * z2;
         accY = y2;
         accZ = -sin(yaw) * x2 + cos(yaw) * z2;
 
+        //previous imu data index
         int imuPointerBack = (imuPointerLast + imuQueLength - 1) % imuQueLength;
+        //check time diff between current imu and previous imu
         double timeDiff = imuTime[imuPointerLast] - imuTime[imuPointerBack];
+        //timeDiff: time diff between IMU data, scanPeriod: LiDAR data time diff
         if (timeDiff < scanPeriod) {
 
+            //Update translation in global frame
             imuShiftX[imuPointerLast] = imuShiftX[imuPointerBack] + imuVeloX[imuPointerBack] * timeDiff + accX * timeDiff * timeDiff / 2;
             imuShiftY[imuPointerLast] = imuShiftY[imuPointerBack] + imuVeloY[imuPointerBack] * timeDiff + accY * timeDiff * timeDiff / 2;
             imuShiftZ[imuPointerLast] = imuShiftZ[imuPointerBack] + imuVeloZ[imuPointerBack] * timeDiff + accZ * timeDiff * timeDiff / 2;
 
+            //IMU velocity update in global frame
             imuVeloX[imuPointerLast] = imuVeloX[imuPointerBack] + accX * timeDiff;
             imuVeloY[imuPointerLast] = imuVeloY[imuPointerBack] + accY * timeDiff;
             imuVeloZ[imuPointerLast] = imuVeloZ[imuPointerBack] + accZ * timeDiff;
 
+            //orientation update in sensor frame
             imuAngularRotationX[imuPointerLast] = imuAngularRotationX[imuPointerBack] + imuAngularVeloX[imuPointerBack] * timeDiff;
             imuAngularRotationY[imuPointerLast] = imuAngularRotationY[imuPointerBack] + imuAngularVeloY[imuPointerBack] * timeDiff;
             imuAngularRotationZ[imuPointerLast] = imuAngularRotationZ[imuPointerBack] + imuAngularVeloZ[imuPointerBack] * timeDiff;
@@ -422,24 +439,31 @@ public:
         double roll, pitch, yaw;
         tf::Quaternion orientation;
         tf::quaternionMsgToTF(imuIn->orientation, orientation);
+        //filtered global orientation
         tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
+        //Motion acceleration in sensor coordinate
         float accX = imuIn->linear_acceleration.y - sin(roll) * cos(pitch) * 9.81;
         float accY = imuIn->linear_acceleration.z - cos(roll) * cos(pitch) * 9.81;
         float accZ = imuIn->linear_acceleration.x + sin(pitch) * 9.81;
 
+        //Imu queue index update
         imuPointerLast = (imuPointerLast + 1) % imuQueLength;
+
 
         imuTime[imuPointerLast] = imuIn->header.stamp.toSec();
 
+        //Global orientation
         imuRoll[imuPointerLast] = roll;
         imuPitch[imuPointerLast] = pitch;
         imuYaw[imuPointerLast] = yaw;
 
+        //acceleration in sensor frame
         imuAccX[imuPointerLast] = accX;
         imuAccY[imuPointerLast] = accY;
         imuAccZ[imuPointerLast] = accZ;
 
+        //angular velocity of gyro in sensor frame
         imuAngularVeloX[imuPointerLast] = imuIn->angular_velocity.x;
         imuAngularVeloY[imuPointerLast] = imuIn->angular_velocity.y;
         imuAngularVeloZ[imuPointerLast] = imuIn->angular_velocity.z;
@@ -477,8 +501,7 @@ public:
         newSegmentedCloudInfo = true;
     }
 
-    //Points are transformed to initial IMU data time which is obtained when first point is obtained.
-    //Using IMU data
+    //Points are transformed to first point frame using imu orientation data
     void adjustDistortion()
     {
         bool halfPassed = false;
@@ -493,6 +516,7 @@ public:
             point.y = segmentedCloud->points[i].z;
             point.z = segmentedCloud->points[i].x;
 
+            //Angle of current point
             float ori = -atan2(point.x, point.z);
             if (!halfPassed) {
                 if (ori < segInfo.startOrientation - M_PI / 2)
@@ -510,14 +534,20 @@ public:
                 else if (ori > segInfo.endOrientation + M_PI / 2)
                     ori -= 2 * M_PI;
             }
-
+            //relative time from start angle (ratio)
             float relTime = (ori - segInfo.startOrientation) / segInfo.orientationDiff;
+            //estimated time of point (in intensity)
             point.intensity = int(segmentedCloud->points[i].intensity) + scanPeriod * relTime;
 
             if (imuPointerLast >= 0) {
+                //time from start point
                 float pointTime = relTime * scanPeriod;
+
+                //Imu pointer that pointing last point in previous lidar cluster
                 imuPointerFront = imuPointerLastIteration;
                 while (imuPointerFront != imuPointerLast) {
+                    //timeScanCur : updated when laser cloud update
+                    //find closest imu data to point stamp (imuPointerFront)
                     if (timeScanCur + pointTime < imuTime[imuPointerFront]) {
                         break;
                     }
@@ -525,24 +555,36 @@ public:
                 }
 
                 if (timeScanCur + pointTime > imuTime[imuPointerFront]) {
+                    //If there is no imu data having greater stamp, add last imu data to current data
+
+                    //filtered global orientation
                     imuRollCur = imuRoll[imuPointerFront];
                     imuPitchCur = imuPitch[imuPointerFront];
                     imuYawCur = imuYaw[imuPointerFront];
 
+                    //IMU velocity in global frame
                     imuVeloXCur = imuVeloX[imuPointerFront];
                     imuVeloYCur = imuVeloY[imuPointerFront];
                     imuVeloZCur = imuVeloZ[imuPointerFront];
 
+                    //IMU translation in global frame
                     imuShiftXCur = imuShiftX[imuPointerFront];
                     imuShiftYCur = imuShiftY[imuPointerFront];
                     imuShiftZCur = imuShiftZ[imuPointerFront];   
                 } else {
+                    //Usually come in this condition
+
+                    //one step previous index of imu data
                     int imuPointerBack = (imuPointerFront + imuQueLength - 1) % imuQueLength;
+
+                    //order =>  imuPointerBack:(timeScanCur+pointTime):imuPointerFront
+                    //point time is exist between two imu data stamp
                     float ratioFront = (timeScanCur + pointTime - imuTime[imuPointerBack]) 
                                                      / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
                     float ratioBack = (imuTime[imuPointerFront] - timeScanCur - pointTime) 
                                                     / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
 
+                    //imuRollCur, imuPitchCur, imuYawCur -> interpolated imu data for lidar point (global orientation)
                     imuRollCur = imuRoll[imuPointerFront] * ratioFront + imuRoll[imuPointerBack] * ratioBack;
                     imuPitchCur = imuPitch[imuPointerFront] * ratioFront + imuPitch[imuPointerBack] * ratioBack;
                     if (imuYaw[imuPointerFront] - imuYaw[imuPointerBack] > M_PI) {
@@ -553,29 +595,38 @@ public:
                         imuYawCur = imuYaw[imuPointerFront] * ratioFront + imuYaw[imuPointerBack] * ratioBack;
                     }
 
+                    //Interpolated imu velocity in global frame
                     imuVeloXCur = imuVeloX[imuPointerFront] * ratioFront + imuVeloX[imuPointerBack] * ratioBack;
                     imuVeloYCur = imuVeloY[imuPointerFront] * ratioFront + imuVeloY[imuPointerBack] * ratioBack;
                     imuVeloZCur = imuVeloZ[imuPointerFront] * ratioFront + imuVeloZ[imuPointerBack] * ratioBack;
 
+                    //Interpolated imu translation in global frame
                     imuShiftXCur = imuShiftX[imuPointerFront] * ratioFront + imuShiftX[imuPointerBack] * ratioBack;
                     imuShiftYCur = imuShiftY[imuPointerFront] * ratioFront + imuShiftY[imuPointerBack] * ratioBack;
                     imuShiftZCur = imuShiftZ[imuPointerFront] * ratioFront + imuShiftZ[imuPointerBack] * ratioBack;
                 }
 
                 if (i == 0) {
+                    //for first point
+                    //start mean the first data of point cloud
+
+                    //global orientation
                     imuRollStart = imuRollCur;
                     imuPitchStart = imuPitchCur;
                     imuYawStart = imuYawCur;
 
+                    //velocity in global frame
                     imuVeloXStart = imuVeloXCur;
                     imuVeloYStart = imuVeloYCur;
                     imuVeloZStart = imuVeloZCur;
 
+                    //translation in global frame
                     imuShiftXStart = imuShiftXCur;
                     imuShiftYStart = imuShiftYCur;
                     imuShiftZStart = imuShiftZCur;
 
                     if (timeScanCur + pointTime > imuTime[imuPointerFront]) {
+                        //imu orientation calculated using angular velocity in sensor frame
                         imuAngularRotationXCur = imuAngularRotationX[imuPointerFront];
                         imuAngularRotationYCur = imuAngularRotationY[imuPointerFront];
                         imuAngularRotationZCur = imuAngularRotationZ[imuPointerFront];
@@ -585,25 +636,36 @@ public:
                                                          / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
                         float ratioBack = (imuTime[imuPointerFront] - timeScanCur - pointTime) 
                                                         / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
+                        //imu orientation calculated using angular velocity in sensor frame (Interpolated)
                         imuAngularRotationXCur = imuAngularRotationX[imuPointerFront] * ratioFront + imuAngularRotationX[imuPointerBack] * ratioBack;
                         imuAngularRotationYCur = imuAngularRotationY[imuPointerFront] * ratioFront + imuAngularRotationY[imuPointerBack] * ratioBack;
                         imuAngularRotationZCur = imuAngularRotationZ[imuPointerFront] * ratioFront + imuAngularRotationZ[imuPointerBack] * ratioBack;
                     }
 
+                    //imuAngularRotationXCur : orientation of first points in current pointcloud
+                    //imuAngularRotationXLast: orientation of first points in previous pointcloud
                     imuAngularFromStartX = imuAngularRotationXCur - imuAngularRotationXLast;
                     imuAngularFromStartY = imuAngularRotationYCur - imuAngularRotationYLast;
                     imuAngularFromStartZ = imuAngularRotationZCur - imuAngularRotationZLast;
+
 
                     imuAngularRotationXLast = imuAngularRotationXCur;
                     imuAngularRotationYLast = imuAngularRotationYCur;
                     imuAngularRotationZLast = imuAngularRotationZCur;
 
+                    //re-calculate of sin and cos of global orientation of first point
                     updateImuRollPitchYawStartSinCos();
                 } else {
+                    //not first point in cloud
                     VeloToStartIMU();
+
+                    //point convert to start point stamp (sensor frame -> global frame -> sensor frame of first point)
+                    //orientation only
                     TransformToStartIMU(&point);
                 }
             }
+
+            //Update undistorted point
             segmentedCloud->points[i] = point;
         }
 
@@ -633,6 +695,7 @@ public:
         }
     }
 
+    //Check occluded point because edge features located behind may not actual edge feature
     void markOccludedPoints()
     {
         int cloudSize = segmentedCloud->points.size();
