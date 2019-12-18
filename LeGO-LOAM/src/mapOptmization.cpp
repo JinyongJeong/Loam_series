@@ -373,6 +373,7 @@ public:
 
     void transformAssociateToMap()
     {
+        //transformSum: lidar odometry value
         float x1 = cos(transformSum[1]) * (transformBefMapped[3] - transformSum[3]) 
                  - sin(transformSum[1]) * (transformBefMapped[5] - transformSum[5]);
         float y1 = transformBefMapped[4] - transformSum[4];
@@ -785,6 +786,7 @@ public:
         }
     }
 
+    //Detect loop
     bool detectLoopClosure(){
 
         latestSurfKeyFrameCloud->clear();
@@ -799,6 +801,7 @@ public:
         kdtreeHistoryKeyPoses->radiusSearch(currentRobotPosPoint, historyKeyframeSearchRadius, pointSearchIndLoop, pointSearchSqDisLoop, 0);
         
         closestHistoryFrameID = -1;
+        //Find closest node
         for (int i = 0; i < pointSearchIndLoop.size(); ++i){
             int id = pointSearchIndLoop[i];
             if (abs(cloudKeyPoses6D->points[id].time - timeLaserOdometry) > 30.0){
@@ -1484,6 +1487,7 @@ public:
 
                 saveKeyFramesAndFactor();
 
+                //when loop is closed
                 correctPoses();
 
                 publishTF();

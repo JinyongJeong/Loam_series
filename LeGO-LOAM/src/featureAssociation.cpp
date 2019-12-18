@@ -1,4 +1,4 @@
-// Copyright 2013, Ji Zhang, Carnegie Mellon University
+﻿// Copyright 2013, Ji Zhang, Carnegie Mellon University
 // Further contributions copyright (c) 2016, Southwest Research Institute
 // All rights reserved.
 //
@@ -704,10 +704,13 @@ public:
 
             float depth1 = segInfo.segmentedCloudRange[i];
             float depth2 = segInfo.segmentedCloudRange[i+1];
+            //segmented cloud include only valid points
             int columnDiff = std::abs(int(segInfo.segmentedCloudColInd[i+1] - segInfo.segmentedCloudColInd[i]));
 
+            //If two point is located close index
             if (columnDiff < 10){
 
+                //if there is large difference in depth, the point located behind is not feature point
                 if (depth1 - depth2 > 0.3){
                     cloudNeighborPicked[i - 5] = 1;
                     cloudNeighborPicked[i - 4] = 1;
@@ -728,6 +731,7 @@ public:
             float diff1 = std::abs(float(segInfo.segmentedCloudRange[i-1] - segInfo.segmentedCloudRange[i]));
             float diff2 = std::abs(float(segInfo.segmentedCloudRange[i+1] - segInfo.segmentedCloudRange[i]));
 
+            //remove noise? ( ignore only one point protruding depend on absolue depth value)
             if (diff1 > 0.02 * segInfo.segmentedCloudRange[i] && diff2 > 0.02 * segInfo.segmentedCloudRange[i])
                 cloudNeighborPicked[i] = 1;
         }
@@ -735,6 +739,8 @@ public:
 
     void extractFeatures()
     {
+
+        //the point that marked as 1 in cloudNeighborPicked is not target for feature extraction
         cornerPointsSharp->clear();
         cornerPointsLessSharp->clear();
         surfPointsFlat->clear();
@@ -762,21 +768,26 @@ public:
                     if (cloudNeighborPicked[ind] == 0 &&
                         cloudCurvature[ind] > edgeThreshold &&
                         segInfo.segmentedCloudGroundFlag[ind] == false) {
-                    
+                        //not ground segment
+
                         largestPickedNum++;
                         //Cloud lebel (2: sharpe , 1: less sharpe)
                         if (largestPickedNum <= 2) {
+                            //2 largest point is sharp edge feature
                             cloudLabel[ind] = 2;
                             cornerPointsSharp->push_back(segmentedCloud->points[ind]);
                             cornerPointsLessSharp->push_back(segmentedCloud->points[ind]);
                         } else if (largestPickedNum <= 20) {
                             cloudLabel[ind] = 1;
+                            //20 largest points is less sharp edge feature
                             cornerPointsLessSharp->push_back(segmentedCloud->points[ind]);
                         } else {
                             break;
                         }
 
                         cloudNeighborPicked[ind] = 1;
+                        //check left/right points of target point
+                        //ignore nearby point
                         for (int l = 1; l <= 5; l++) {
                             int columnDiff = std::abs(int(segInfo.segmentedCloudColInd[ind + l] - segInfo.segmentedCloudColInd[ind + l - 1]));
                             if (columnDiff > 10)
@@ -799,17 +810,21 @@ public:
                     if (cloudNeighborPicked[ind] == 0 &&
                         cloudCurvature[ind] < surfThreshold &&
                         segInfo.segmentedCloudGroundFlag[ind] == true) {
+                        //small smoothness & gound points
 
-                        //flat ground index
                         cloudLabel[ind] = -1;
                         surfPointsFlat->push_back(segmentedCloud->points[ind]);
 
                         smallestPickedNum++;
+                        //find 4 smallest point with ground flag
                         if (smallestPickedNum >= 4) {
                             break;
                         }
 
+
                         cloudNeighborPicked[ind] = 1;
+
+                        //Check nearby point
                         for (int l = 1; l <= 5; l++) {
 
                             int columnDiff = std::abs(int(segInfo.segmentedCloudColInd[ind + l] - segInfo.segmentedCloudColInd[ind + l - 1]));
@@ -831,6 +846,8 @@ public:
 
                 //exclude sharp points
                 for (int k = sp; k <= ep; k++) {
+                    //label: 0 => not update, -1: ground, 1: less edge, 2: sharp edge
+                    //lessflat => not updated point and ground
                     if (cloudLabel[k] <= 0) {
                         surfPointsLessFlatScan->push_back(segmentedCloud->points[k]);
                     }
@@ -840,6 +857,7 @@ public:
             surfPointsLessFlatScanDS->clear();
             downSizeFilter.setInputCloud(surfPointsLessFlatScan);
             downSizeFilter.filter(*surfPointsLessFlatScanDS);
+            //less points grid filter
 
             *surfPointsLessFlat += *surfPointsLessFlatScanDS;
         }
@@ -879,9 +897,12 @@ public:
     }
 
 
+    //Need to understand what is transformCur
     void TransformToStart(PointType const * const pi, PointType * const po)
     {
-        //ratio recovery (10 -> because of frame (0.1))
+        //input point is undistorted point (start time)
+
+        //? why * 10 ( data interval is 0.1??)
         float s = 10 * (pi->intensity - int(pi->intensity));
 
         float rx = s * transformCur[0];
@@ -928,6 +949,7 @@ public:
         float y3 = y2;
         float z3 = sin(ry) * x2 + cos(ry) * z2;
 
+        //////////////
         rx = transformCur[0];
         ry = transformCur[1];
         rz = transformCur[2];
@@ -947,6 +969,7 @@ public:
         float y6 = sin(rz) * x5 + cos(rz) * y5 + ty;
         float z6 = z5 + tz;
 
+        /////////////Start
         float x7 = cosImuRollStart * (x6 - imuShiftFromStartX) 
                  - sinImuRollStart * (y6 - imuShiftFromStartY);
         float y7 = sinImuRollStart * (x6 - imuShiftFromStartX) 
@@ -961,6 +984,7 @@ public:
         float y9 = y8;
         float z9 = -sinImuYawStart * x8 + cosImuYawStart * z8;
 
+        ////////////// last
         float x10 = cos(imuYawLast) * x9 - sin(imuYawLast) * z9;
         float y10 = y9;
         float z10 = sin(imuYawLast) * x9 + cos(imuYawLast) * z9;
@@ -1180,8 +1204,10 @@ public:
         }
     }
 
+    //itercount 0~25 -> result is laserCloudOri
     void findCorrespondingSurfFeatures(int iterCount){
 
+        //surfPointsFlat: flat and ground
         int surfPointsFlatNum = surfPointsFlat->points.size();
 
         for (int i = 0; i < surfPointsFlatNum; i++) {
@@ -1328,7 +1354,8 @@ public:
         float b1 = -crz*sry - cry*srx*srz; float b2 = cry*crz*srx - sry*srz;
         float b5 = cry*crz - srx*sry*srz; float b6 = cry*srz + crz*srx*sry;
 
-        float c1 = -b6; float c2 = b5; float c3 = tx*b6 - ty*b5; float c4 = -crx*crz; float c5 = crx*srz; float c6 = ty*c5 + tx*-c4;
+        float c1 = -b6; float c2 = b5; float c3 = tx*b6 - ty*b5;
+        float c4 = -crx*crz; float c5 = crx*srz; float c6 = ty*c5 + tx*-c4;
         float c7 = b2; float c8 = -b1; float c9 = tx*-b2 - ty*-b1;
 
         for (int i = 0; i < pointSelNum; i++) {
@@ -1336,14 +1363,17 @@ public:
             pointOri = laserCloudOri->points[i];
             coeff = coeffSel->points[i];
 
+            //roll
             float arx = (-a1*pointOri.x + a2*pointOri.y + a3*pointOri.z + a4) * coeff.x
                       + (a5*pointOri.x - a6*pointOri.y + crx*pointOri.z + a7) * coeff.y
                       + (a8*pointOri.x - a9*pointOri.y - a10*pointOri.z + a11) * coeff.z;
 
+            //pitch
             float arz = (c1*pointOri.x + c2*pointOri.y + c3) * coeff.x
                       + (c4*pointOri.x - c5*pointOri.y + c6) * coeff.y
                       + (c7*pointOri.x + c8*pointOri.y + c9) * coeff.z;
 
+            //z
             float aty = -b6 * coeff.x + c4 * coeff.y + b2 * coeff.z;
 
             float d2 = coeff.intensity;
@@ -1510,6 +1540,7 @@ public:
         return true;
     }
 
+    //Should understand!!
     bool calculateTransformation(int iterCount){
 
         int pointSelNum = laserCloudOri->points.size();
@@ -1635,9 +1666,12 @@ public:
         return true;
     }
 
+    //Run this function only once
     void checkSystemInitialization(){
 
+        //All feature is undistorted
         pcl::PointCloud<PointType>::Ptr laserCloudTemp = cornerPointsLessSharp;
+
         cornerPointsLessSharp = laserCloudCornerLast;
         laserCloudCornerLast = laserCloudTemp;
 
@@ -1645,6 +1679,7 @@ public:
         surfPointsLessFlat = laserCloudSurfLast;
         laserCloudSurfLast = laserCloudTemp;
 
+        //Make kdtree using less sharp feature and less flat
         kdtreeCornerLast->setInputCloud(laserCloudCornerLast);
         kdtreeSurfLast->setInputCloud(laserCloudSurfLast);
 
@@ -1663,6 +1698,7 @@ public:
         laserCloudSurfLast2.header.frame_id = "/camera";
         pubLaserCloudSurfLast.publish(laserCloudSurfLast2);
 
+        //Initialize using first imu orientation
         transformSum[0] += imuPitchStart;
         transformSum[2] += imuRollStart;
 
@@ -1671,6 +1707,7 @@ public:
 
     void updateInitialGuess(){
 
+        //here, imuPitchCur is imu orientation of last point of lidar
         imuPitchLast = imuPitchCur;
         imuYawLast = imuYawCur;
         imuRollLast = imuRollCur;
@@ -1679,10 +1716,12 @@ public:
         imuShiftFromStartY = imuShiftFromStartYCur;
         imuShiftFromStartZ = imuShiftFromStartZCur;
 
+        //IMU velocity from start to current in global frame
         imuVeloFromStartX = imuVeloFromStartXCur;
         imuVeloFromStartY = imuVeloFromStartYCur;
         imuVeloFromStartZ = imuVeloFromStartZCur;
 
+        //???? revert to start transform?
         if (imuAngularFromStartX != 0 || imuAngularFromStartY != 0 || imuAngularFromStartZ != 0){
             transformCur[0] = - imuAngularFromStartY;
             transformCur[1] = - imuAngularFromStartZ;
